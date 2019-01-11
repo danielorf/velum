@@ -80,7 +80,8 @@ class Pillar < ApplicationRecord
         external_cert_kubeapi_cert:         "external_cert:kube_api:cert",
         external_cert_kubeapi_key:          "external_cert:kube_api:key",
         external_cert_dex_cert:             "external_cert:dex:cert",
-        external_cert_dex_key:              "external_cert:dex:key"
+        external_cert_dex_key:              "external_cert:dex:key",
+        # internal_infra_domain:              "internal_infra_domain"
       }
     end
     # rubocop:enable Metrics/MethodLength

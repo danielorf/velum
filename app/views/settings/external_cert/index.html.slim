@@ -10,13 +10,77 @@ p Enable the use of External SSL Certificates for CaaSP and Kubernetes services.
 
   br
   = render template: 'settings/external_cert/_form', 
-  locals: { f: f , _service_name: "Velum" , _cert: @velum_cert, _key: @velum_key, _cert_file_field: :velum_cert , _key_file_field: :velum_key }
+  locals: { f: f , _service_name: "Velum" , _cert: @velum_cert, _key: @velum_key, _cert_file_field: :velum_cert , _key_file_field: :velum_key, _heading: "headingOne", _collapse: "collapseOne", _subjectaltnames: @subject_alt_names[:velum] }
   br
   = render template: 'settings/external_cert/_form', 
-  locals: { f: f , _service_name: "Kubernetes API" , _cert: @kubeapi_cert, _key: @kubeapi_key, _cert_file_field: :kubeapi_cert , _key_file_field: :kubeapi_key }
+  locals: { f: f , _service_name: "Kubernetes API" , _cert: @kubeapi_cert, _key: @kubeapi_key, _cert_file_field: :kubeapi_cert , _key_file_field: :kubeapi_key, _heading: "headingTwo", _collapse: "collapseTwo", _subjectaltnames: @subject_alt_names[:kubeapi] }
   br
   = render template: 'settings/external_cert/_form', 
-  locals: { f: f , _service_name: "Dex" , _cert: @dex_cert, _key: @dex_key, _cert_file_field: :dex_cert , _key_file_field: :dex_key }
+  locals: { f: f , _service_name: "Dex" , _cert: @dex_cert, _key: @dex_key, _cert_file_field: :dex_cert , _key_file_field: :dex_key, _heading: "headingThree", _collapse: "collapseThree", _subjectaltnames: @subject_alt_names[:dex] }
 
   .clearfix.text-right.steps-container
     = submit_tag "Save", id: "save", class: "btn btn-primary pull-right"
+
+/   h5 Velum required hostnames
+/   p #{@l[:velum]}
+/   br
+/   h5 KubeAPI required hostnames
+/   p #{@l[:kubeapi]}
+/   br
+/   h5 Dex required hostnames
+/   p #{@l[:dex]}
+
+
+/   #accordionExample.accordion
+/    .card
+/     #headingOne.card-header
+/       h5.mb-0
+/         button.btn.btn-link.collapsed aria-controls="collapseOne" aria-expanded="false" data-target="#collapseOne" data-toggle="collapse" type="button" 
+/           | Collapsible Group Item #1
+/     #collapseOne.collapse aria-labelledby="headingOne" data-parent="#accordionExample" 
+/       .card-body
+/         | ABCD
+/   .card
+/     #headingTwo.card-header
+/       h5.mb-0
+/         button.btn.btn-link.collapsed aria-controls="collapseTwo" aria-expanded="false" data-target="#collapseTwo" data-toggle="collapse" type="button" 
+/           | Collapsible Group Item #2
+/     #collapseTwo.collapse aria-labelledby="headingTwo" data-parent="#accordionExample" 
+/       .card-body
+/         | EFGH
+/   .card
+/     #headingThree.card-header
+/       h5.mb-0
+/         button.btn.btn-link.collapsed aria-controls="collapseThree" aria-expanded="false" data-target="#collapseThree" data-toggle="collapse" type="button" 
+/           | Collapsible Group Item #3
+/     #collapseThree.collapse aria-labelledby="headingThree" data-parent="#accordionExample" 
+/       .card-body
+/         | IJKLMNOP
+
+/   br
+/   .wrapper.center-block
+/   #accordion.panel-group aria-multiselectable="true" role="tablist" 
+/     .panel.panel-default
+/       #headingOne.panel-heading.active role="tab" 
+/         h4.panel-title
+/           a.collapsed aria-controls="collapseOne" aria-expanded="false" data-parent="#accordion" data-toggle="collapse" href="#collapseOne" role="button" 
+/             | Collapsible Group Item #1
+/       #collapseOne.panel-collapse.collapse aria-labelledby="headingOne" role="tabpanel" 
+/         .panel-body
+/           | ABCD
+/     .panel.panel-default
+/       #headingTwo.panel-heading role="tab" 
+/         h4.panel-title
+/           a.collapsed aria-controls="collapseTwo" aria-expanded="false" data-parent="#accordion" data-toggle="collapse" href="#collapseTwo" role="button" 
+/             | Collapsible Group Item #2
+/       #collapseTwo.panel-collapse.collapse aria-labelledby="headingTwo" role="tabpanel" 
+/         .panel-body
+/           | EFGHI
+/     .panel.panel-default
+/       #headingThree.panel-heading role="tab" 
+/         h4.panel-title
+/           a.collapsed aria-controls="collapseThree" aria-expanded="false" data-parent="#accordion" data-toggle="collapse" href="#collapseThree" role="button" 
+/             | Collapsible Group Item #3
+/       #collapseThree.panel-collapse.collapse aria-labelledby="headingThree" role="tabpanel" 
+/         .panel-body
+/           | JKLMNOPQ

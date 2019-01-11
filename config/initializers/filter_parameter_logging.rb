@@ -7,5 +7,5 @@ Rails.application.config.filter_parameters += [
   :client_secret,
   :authenticity_token, :id_token, :refresh_token,
   :velum_cert, :velum_key, :kubeapi_cert,
-  :kubeapi_key, :dex_cert, :dex_key
+  :kubeapi_key, :dex_cert, :dex_key,
 ]
