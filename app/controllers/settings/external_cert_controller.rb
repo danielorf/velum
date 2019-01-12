@@ -7,6 +7,7 @@ class Settings::ExternalCertController < SettingsController
   VELUM_NAME = "Velum".freeze
   KUBEAPI_NAME = "Kubernetes API".freeze
   DEX_NAME = "Dex".freeze
+  WEAK_SIGNATURE_HASHES = ["sha1", "md5"].freeze
 
   def index
     set_instance_variables
@@ -131,8 +132,8 @@ class Settings::ExternalCertController < SettingsController
         return render_failure_event(message)
       end
 
-      # Check that cert has valid date range
-      return false unless cert_date_check(cert)
+      # Validate a cert
+      return false unless valid_cert?(cert)
 
       # Moved to another task
       # Check that hostname is in SubjectAltName of cert
@@ -242,15 +243,39 @@ class Settings::ExternalCertController < SettingsController
     subject_alt_name.value.gsub("DNS:", "").delete(",").split(" ")
   end
 
-  def cert_date_check(cert)
-    if Time.now.utc > cert.not_after || Time.now.utc < cert.not_before
-      message = "Certificate out of valid date range"
-      render_failure_event(message)
-    else
-      true # return true
+  def valid_cert?(cert)
+    validation_checks = [valid_cert_date?(cert),
+                         valid_rsa_keylength?(cert),
+                         valid_strong_hash?(cert)]
+    validation_checks.each do |func|
+      return false unless func
     end
+    true
   end
 
+  # Check if a certificate has a vaild date
+  def valid_cert_date?(cert)
+    return true unless Time.now.utc > cert.not_after || Time.now.utc < cert.not_before
+    message = "Certificate out of valid date range"
+    render_failure_event(message)
+  end
+
+  # Check if a certificate uses the key length that is less than 2048 bits
+  def valid_rsa_keylength?(cert)
+    key_length_in_bits = cert.public_key.n.num_bytes * 8
+    return true unless key_length_in_bits < 2048
+    message = "RSA key bit length should be greater than or equal to 2048"
+    render_failure_event(message)
+  end
+
+  # Check if a certificate uses a weak hash algorithm
+  def valid_strong_hash?(cert)
+    hash_algorithm = cert.signature_algorithm.chomp "WithRSAEncryption"
+    return true unless WEAK_SIGNATURE_HASHES.include? hash_algorithm
+    message = "Certificate includes a weak signature hash algorithm
+                      (#{WEAK_SIGNATURE_HASHES.join(", ")})"
+    render_failure_event(message)
+  end
   # # Placeholder for hostname/SubjectAltName check
   # def hostname_check(_cert)
   #   true
