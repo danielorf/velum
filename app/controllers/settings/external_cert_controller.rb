@@ -20,21 +20,21 @@ class Settings::ExternalCertController < SettingsController
     end
 
     cert_map = {
-      external_cert_velum_cert:   key_cert_map_temp[:velum][:cert][:cert_string],
-      external_cert_velum_key:    key_cert_map_temp[:velum][:key][:key_string],
+      external_cert_velum_cert: key_cert_map_temp[:velum][:cert][:cert_string],
+      external_cert_velum_key: key_cert_map_temp[:velum][:key][:key_string],
       external_cert_kubeapi_cert: key_cert_map_temp[:kubeapi][:cert][:cert_string],
-      external_cert_kubeapi_key:  key_cert_map_temp[:kubeapi][:key][:key_string],
-      external_cert_dex_cert:     key_cert_map_temp[:dex][:cert][:cert_string],
-      external_cert_dex_key:      key_cert_map_temp[:dex][:key][:key_string]
+      external_cert_kubeapi_key: key_cert_map_temp[:kubeapi][:key][:key_string],
+      external_cert_dex_cert: key_cert_map_temp[:dex][:cert][:cert_string],
+      external_cert_dex_key: key_cert_map_temp[:dex][:key][:key_string],
     }
     @errors = Pillar.apply cert_map
     if @errors.empty?
       redirect_to settings_external_cert_index_path,
         notice: "External Certificate settings successfully saved."
       return
-    # :nocov:
-    # An error here would require a failure in connection to velum->salt
-    # or a corruption in mapping of values in the salt pillar
+      # :nocov:
+      # An error here would require a failure in connection to velum->salt
+      # or a corruption in mapping of values in the salt pillar
     else
       set_instance_variables
       render action: :index, status: :unprocessable_entity
@@ -63,39 +63,39 @@ class Settings::ExternalCertController < SettingsController
 
   def key_cert_map
     {
-      velum:   {
+      velum: {
         name: VELUM_NAME,
         cert: {
-          cert_string:      get_val_from_form(:velum_cert),
-          pillar_model_key: :external_cert_velum_cert
+          cert_string: get_val_from_form(:velum_cert),
+          pillar_model_key: :external_cert_velum_cert,
         },
-        key:  {
-          key_string:       get_val_from_form(:velum_key),
-          pillar_model_key: :external_cert_velum_key
-        }
+        key: {
+          key_string: get_val_from_form(:velum_key),
+          pillar_model_key: :external_cert_velum_key,
+        },
       },
       kubeapi: {
         name: KUBEAPI_NAME,
         cert: {
-          cert_string:      get_val_from_form(:kubeapi_cert),
-          pillar_model_key: :external_cert_kubeapi_cert
+          cert_string: get_val_from_form(:kubeapi_cert),
+          pillar_model_key: :external_cert_kubeapi_cert,
         },
-        key:  {
-          key_string:       get_val_from_form(:kubeapi_key),
-          pillar_model_key: :external_cert_kubeapi_key
-        }
+        key: {
+          key_string: get_val_from_form(:kubeapi_key),
+          pillar_model_key: :external_cert_kubeapi_key,
+        },
       },
-      dex:     {
+      dex: {
         name: DEX_NAME,
         cert: {
-          cert_string:      get_val_from_form(:dex_cert),
-          pillar_model_key: :external_cert_dex_cert
+          cert_string: get_val_from_form(:dex_cert),
+          pillar_model_key: :external_cert_dex_cert,
         },
-        key:  {
-          key_string:       get_val_from_form(:dex_key),
-          pillar_model_key: :external_cert_dex_key
-        }
-      }
+        key: {
+          key_string: get_val_from_form(:dex_key),
+          pillar_model_key: :external_cert_dex_key,
+        },
+      },
     }
   end
 
@@ -104,11 +104,11 @@ class Settings::ExternalCertController < SettingsController
     # Do nothing if both cert/key are empty
     if key_cert_map[:cert][:cert_string].empty? && key_cert_map[:key][:key_string].empty?
       true # return true
-    # Prevent upload unnless both cert/key are present
+      # Prevent upload unnless both cert/key are present
     elsif key_cert_map[:cert][:cert_string].empty? || key_cert_map[:key][:key_string].empty?
       message = "Error with #{key_cert_map[:name]}, certificate and key must be uploaded together."
       render_failure_event(message)
-    # Validate cert/key and verify that they match
+      # Validate cert/key and verify that they match
     else
       cert = read_cert(key_cert_map[:cert][:cert_string])
       key = read_key(key_cert_map[:key][:key_string])
@@ -132,8 +132,12 @@ class Settings::ExternalCertController < SettingsController
         return render_failure_event(message)
       end
 
-      # Validate a cert
-      return false unless valid_cert?(cert)
+      # Check if a certificate has a vaild date
+      return false unless valid_cert_date?(cert)
+      # Check if a certificate uses the key length that is less than 2048 bits
+      return false unless valid_rsa_keylength?(cert)
+      # Check if a certificate uses a weak hash algorithm
+      return false unless valid_strong_hash?(cert)
 
       # Moved to another task
       # Check that hostname is in SubjectAltName of cert
@@ -147,22 +151,23 @@ class Settings::ExternalCertController < SettingsController
       true
     end
   end
-  # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+
+  # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize
 
   def cert_parse(cert_string)
     params = {}
 
     # Check if certificate exists, assume that validation has already occured
     if !cert_string
-      params[:Message] = { Notice: "Certificate not available, please upload a certificate" }
+      params[:Message] = {Notice: "Certificate not available, please upload a certificate"}
     else
       cert = read_cert(cert_string)
       unless cert
         # :nocov:
         # Cert has aleady been valiated when entered, an error here would require a failure
         # in connection from velum to salt or an unintended change in the salt pillar
-        params[:Message] = { Error: "Failed to parse stored certificate, please check format and " \
-        "upload again" }
+        params[:Message] = {Error: "Failed to parse stored certificate, please check format and " \
+        "upload again"}
         return params
         # :nocov:
       end
@@ -190,22 +195,22 @@ class Settings::ExternalCertController < SettingsController
   def key_parse(key_string)
     params = {}
     if !key_string
-      params[:Message] = { Notice: "Key not available, please upload a key" }
-    # :nocov:
-    # Key has aleady been valiated when entered, an error here would require a failure
-    # in connection from velum to salt or an unintended change in the salt pillar
+      params[:Message] = {Notice: "Key not available, please upload a key"}
+      # :nocov:
+      # Key has aleady been valiated when entered, an error here would require a failure
+      # in connection from velum to salt or an unintended change in the salt pillar
     else
       key = read_key(key_string)
       unless key
-        params[:Message] = { Error: "Failed to parse stored key, please check format and " \
-        "upload again" }
+        params[:Message] = {Error: "Failed to parse stored key, please check format and " \
+        "upload again"}
         return params
       end
       key_valid = if key
-        true # return true
-      else
-        false # return false
-      end
+                    true # return true
+                  else
+                    false # return false
+                  end
       params["Valid Key"] = key_valid
       # :nocov:
     end
@@ -243,16 +248,6 @@ class Settings::ExternalCertController < SettingsController
     subject_alt_name.value.gsub("DNS:", "").delete(",").split(" ")
   end
 
-  def valid_cert?(cert)
-    validation_checks = [valid_cert_date?(cert),
-                         valid_rsa_keylength?(cert),
-                         valid_strong_hash?(cert)]
-    validation_checks.each do |func|
-      return false unless func
-    end
-    true
-  end
-
   # Check if a certificate has a vaild date
   def valid_cert_date?(cert)
     return true unless Time.now.utc > cert.not_after || Time.now.utc < cert.not_before
@@ -276,6 +271,7 @@ class Settings::ExternalCertController < SettingsController
                       (#{WEAK_SIGNATURE_HASHES.join(", ")})"
     render_failure_event(message)
   end
+
   # # Placeholder for hostname/SubjectAltName check
   # def hostname_check(_cert)
   #   true
@@ -286,4 +282,5 @@ class Settings::ExternalCertController < SettingsController
   #   true
   # end
 end
+
 # rubocop:enable Metrics/ClassLength
