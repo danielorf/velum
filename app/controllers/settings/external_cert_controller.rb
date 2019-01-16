@@ -7,6 +7,7 @@ class Settings::ExternalCertController < SettingsController
   VELUM_NAME = "Velum".freeze
   KUBEAPI_NAME = "Kubernetes API".freeze
   DEX_NAME = "Dex".freeze
+  WEAK_SIGNATURE_HASHES = ["sha1", "md5"].freeze
 
   def index
     set_instance_variables
@@ -98,7 +99,7 @@ class Settings::ExternalCertController < SettingsController
     }
   end
 
-  # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+  # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize
   def upload_validate(key_cert_map)
     # Do nothing if both cert/key are empty
     if key_cert_map[:cert][:cert_string].empty? && key_cert_map[:key][:key_string].empty?
@@ -131,8 +132,12 @@ class Settings::ExternalCertController < SettingsController
         return render_failure_event(message)
       end
 
-      # Check that cert has valid date range
-      return false unless cert_date_check(cert)
+      # Check if a certificate has a vaild date
+      return false unless valid_cert_date?(cert)
+      # Check if a certificate uses the key length that is less than 2048 bits
+      return false unless valid_rsa_keylength?(cert)
+      # Check if a certificate uses a weak hash algorithm
+      return false unless valid_strong_hash?(cert)
 
       # Moved to another task
       # Check that hostname is in SubjectAltName of cert
@@ -146,7 +151,7 @@ class Settings::ExternalCertController < SettingsController
       true
     end
   end
-  # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+  # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize
 
   def cert_parse(cert_string)
     params = {}
@@ -242,15 +247,29 @@ class Settings::ExternalCertController < SettingsController
     subject_alt_name.value.gsub("DNS:", "").delete(",").split(" ")
   end
 
-  def cert_date_check(cert)
-    if Time.now.utc > cert.not_after || Time.now.utc < cert.not_before
-      message = "Certificate out of valid date range"
-      render_failure_event(message)
-    else
-      true # return true
-    end
+  # Check if a certificate has a vaild date
+  def valid_cert_date?(cert)
+    return true unless Time.now.utc > cert.not_after || Time.now.utc < cert.not_before
+    message = "Certificate out of valid date range"
+    render_failure_event(message)
   end
 
+  # Check if a certificate uses the key length that is less than 2048 bits
+  def valid_rsa_keylength?(cert)
+    key_length_in_bits = cert.public_key.n.num_bytes * 8
+    return true unless key_length_in_bits < 2048
+    message = "RSA key bit length should be greater than or equal to 2048"
+    render_failure_event(message)
+  end
+
+  # Check if a certificate uses a weak hash algorithm
+  def valid_strong_hash?(cert)
+    hash_algorithm = cert.signature_algorithm.chomp "WithRSAEncryption"
+    return true unless WEAK_SIGNATURE_HASHES.include? hash_algorithm
+    message = "Certificate includes a weak signature hash algorithm
+                      (#{WEAK_SIGNATURE_HASHES.join(", ")})"
+    render_failure_event(message)
+  end
   # # Placeholder for hostname/SubjectAltName check
   # def hostname_check(_cert)
   #   true
