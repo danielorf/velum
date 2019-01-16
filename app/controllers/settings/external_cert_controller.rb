@@ -99,7 +99,7 @@ class Settings::ExternalCertController < SettingsController
     }
   end
 
-  # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+  # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize
   def upload_validate(key_cert_map)
     # Do nothing if both cert/key are empty
     if key_cert_map[:cert][:cert_string].empty? && key_cert_map[:key][:key_string].empty?
@@ -132,8 +132,12 @@ class Settings::ExternalCertController < SettingsController
         return render_failure_event(message)
       end
 
-      # Validate a cert
-      return false unless valid_cert?(cert)
+      # Check if a certificate has a vaild date
+      return false unless valid_cert_date?(cert)
+      # Check if a certificate uses the key length that is less than 2048 bits
+      return false unless valid_rsa_keylength?(cert)
+      # Check if a certificate uses a weak hash algorithm
+      return false unless valid_strong_hash?(cert)
 
       # Moved to another task
       # Check that hostname is in SubjectAltName of cert
@@ -147,7 +151,7 @@ class Settings::ExternalCertController < SettingsController
       true
     end
   end
-  # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+  # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize
 
   def cert_parse(cert_string)
     params = {}
@@ -241,16 +245,6 @@ class Settings::ExternalCertController < SettingsController
     subject_alt_name = cert.extensions.find { |e| e.oid == "subjectAltName" }
     return nil unless subject_alt_name
     subject_alt_name.value.gsub("DNS:", "").delete(",").split(" ")
-  end
-
-  def valid_cert?(cert)
-    validation_checks = [valid_cert_date?(cert),
-                         valid_rsa_keylength?(cert),
-                         valid_strong_hash?(cert)]
-    validation_checks.each do |func|
-      return false unless func
-    end
-    true
   end
 
   # Check if a certificate has a vaild date
