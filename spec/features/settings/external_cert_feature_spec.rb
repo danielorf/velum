@@ -115,7 +115,25 @@ describe "Feature: External Cerificate settings", js: true do
       expect(page).to have_content("ftp.example.com")
     end
 
-    # Faiure Conditions
+    it "uploads velum cert with a weak RSA bit length key (<= 2048)" do
+      attach_file("external_certificate_velum_cert", weak_key_cert)
+      attach_file("external_certificate_velum_key", key_for_weak_key_cert)
+
+      click_button("Save")
+      expect(page).to have_http_status(:success)
+      expect(page).to have_content("RSA key bit length should be greater than or equal to 2048")
+    end
+
+    it "uploads velum cert with a weak hash algorithm (sha1)" do
+      attach_file("external_certificate_velum_cert", weak_hash_cert)
+      attach_file("external_certificate_velum_key", key_for_weak_hash_cert)
+
+      click_button("Save")
+      expect(page).to have_http_status(:success)
+      expect(page).to have_content("Certificate includes a weak signature hash algorithm")
+    end
+
+    # Failure Conditions
 
     it "uploads malformed velum certificate" do
       attach_file("external_certificate_velum_cert", ssl_cert_file_malformed)
@@ -254,24 +272,6 @@ describe "Feature: External Cerificate settings", js: true do
       click_button("Save")
       expect(page).to have_http_status(:unprocessable_entity)
       expect(page).to have_content("Certificate out of valid date range")
-    end
-
-    it "uploads velum cert with a weak RSA bit length key (<= 2048)" do
-      attach_file("external_certificate_velum_cert", weak_key_cert)
-      attach_file("external_certificate_velum_key", key_for_weak_key_cert)
-
-      click_button("Save")
-      expect(page).to have_http_status(:unprocessable_entity)
-      expect(page).to have_content("RSA key bit length should be greater than or equal to 2048")
-    end
-
-    it "uploads velum cert with a weak hash algorithm (sha1)" do
-      attach_file("external_certificate_velum_cert", weak_hash_cert)
-      attach_file("external_certificate_velum_key", key_for_weak_hash_cert)
-
-      click_button("Save")
-      expect(page).to have_http_status(:unprocessable_entity)
-      expect(page).to have_content("Certificate includes a weak signature hash algorithm")
     end
   end
 end
