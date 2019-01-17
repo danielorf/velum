@@ -1,0 +1,135 @@
+= render 'settings/apply'
+
+h2 External Certificates
+
+p Enable the use of External SSL Certificates for CaaSP and Kubernetes services.  Certificates and matching keys must be in armored PEM format.
+.alert.alert-warning role='alert'
+ p Remember to add a Root CA Certificate to the System Wide Certificates corresponding to any new External Certificates
+
+= form_for :external_certificate, url: settings_ext_cert_index_path, method: :post do |f|
+  br
+  .panel
+    .panel-default
+      .panel-heading
+        h3.panel-title Velum SSL Certificate and Key
+      .panel-body
+        - if @velum_cert
+          .cert-table
+            h5.cert-parse-heading Current Velum SSL Certificate Info:
+            table
+              - @velum_cert.each do |k, v|
+                tr
+                  td.field = k.to_s
+                  td.value = v.to_s
+        - else
+          .cert-table
+            p No Velum certificates found.  Please add a certificate.
+        br
+        .form-group.form-group-certificate
+          p Select "Choose File" to upload a new Velum SSL Certificate:
+          = f.file_field :velum_cert, required: false
+        br
+        - if @velum_key
+          .cert-table
+            h5.cert-parse-heading Current Velum SSL Key Info:
+            - @velum_key.each do |k, v|
+              - if v
+                - textcolor = "ext-cert-success"
+              - else
+                - textcolor = "ext-cert-fail"
+
+              .cert-element 
+                <strong>#{k}</strong>:  <span class=#{textcolor}>#{v}</span>
+        - else
+          .cert-table
+            p No Velum SSL Key found.  Please add an SSL key.
+        br
+        .form-group.form-group-certificate
+          p Select "Choose File" to upload a new Velum SSL Key:
+          = f.file_field :velum_key, required: false
+  br
+
+  .panel
+    .panel-default
+      .panel-heading
+        h3.panel-title Kubernetes API SSL Certificate and Key
+      .panel-body
+        - if @kubeapi_cert
+          .cert-table
+            h5.cert-parse-heading Current Kubernetes API SSL Certificate Info:
+            table
+              - @kubeapi_cert.each do |k, v|
+                tr
+                  td.field = k.to_s
+                  td.value = v.to_s
+        - else
+          .cert-table
+            p No Kubernetes API certificates found.  Please add a certificate.
+        br
+        .form-group.form-group-certificate
+          p Select "Choose File" to upload a new Kubernetes API SSL Certificate:
+          = f.file_field :kubeapi_cert, required: false
+        br
+        - if @kubeapi_key
+          .cert-table
+            h5.cert-parse-heading Current Kubernetes API SSL Key Info:
+            - @kubeapi_key.each do |k, v|
+              - if v
+                - textcolor = "ext-cert-success"
+              - else
+                - textcolor = "ext-cert-fail"
+
+              .cert-element 
+                <strong>#{k}</strong>:  <span class=#{textcolor}>#{v}</span>
+        - else
+          .cert-table
+            p No Kubernetes API SSL Key found.  Please add an SSL key.
+        br
+        .form-group.form-group-certificate
+          p Select "Choose File" to upload a new Kubernetes API SSL Key:
+          = f.file_field :kubeapi_key, required: false
+  br
+
+  .panel
+    .panel-default
+      .panel-heading
+        h3.panel-title Dex SSL Certificate and Key
+      .panel-body
+        - if @dex_cert
+          .cert-table
+            h5.cert-parse-heading Current Dex SSL Certificate Info:
+            table
+              - @dex_cert.each do |k, v|
+                tr
+                  td.field = k.to_s
+                  td.value = v.to_s
+        - else
+          .cert-table
+            p No Dex certificates found.  Please add a certificate.
+        br
+        .form-group.form-group-certificate
+          p Select "Choose File" to upload a new Dex SSL Certificate:
+          = f.file_field :dex_cert, required: false
+        br
+        - if @dex_key
+          .cert-table
+            h5.cert-parse-heading Current Dex SSL Key Info:
+            - @dex_key.each do |k, v|
+              - if v
+                - textcolor = "ext-cert-success"
+              - else
+                - textcolor = "ext-cert-fail"
+
+              .cert-element 
+                <strong>#{k}</strong>:  <span class=#{textcolor}>#{v}</span>
+        - else
+          .cert-table
+            p No Dex SSL Key found.  Please add an SSL key.
+        br
+        .form-group.form-group-certificate
+          p Select "Choose File" to upload a new Dex SSL Key:
+          = f.file_field :dex_key, required: false
+
+
+  .clearfix.text-right.steps-container
+    = submit_tag "Save", id: "save", class: "btn btn-primary pull-right"
